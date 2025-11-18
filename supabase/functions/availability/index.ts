@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -185,6 +186,31 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch system credentials from database
+    const { data: credentials, error: credError } = await supabase
+      .from('system_credentials')
+      .select('system_name, endpoint_url, api_key, api_secret, is_active')
+      .eq('is_active', true);
+
+    if (credError) {
+      console.error('Error fetching credentials:', credError);
+    }
+
+    // Log available credentials
+    const availableSystems = credentials?.map(c => c.system_name) || [];
+    console.log(`Available API credentials: ${availableSystems.join(', ') || 'none'}`);
+
+    // TODO: Use credentials to query real APIs
+    // For now, we'll continue using mock data
+    // When real APIs are integrated:
+    // - Use credentials.find(c => c.system_name === 'nightsbridge') for NightsBridge API
+    // - Use credentials.find(c => c.system_name === 'checkfront') for Checkfront API
 
     // Simulate querying NightsBridge
     const nightsbridgeProperties = mockProperties.filter(p => {
