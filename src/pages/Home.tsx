@@ -5,10 +5,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format, addDays } from "date-fns";
-import { CalendarIcon, Search } from "lucide-react";
+import { CalendarIcon, Search, Users, Baby, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -16,6 +17,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Popover,
@@ -95,6 +97,8 @@ const Home = () => {
     navigate(`/search?${params.toString()}`);
   };
 
+  const totalGuests = form.watch("adults") + form.watch("children") + form.watch("infants");
+
   return (
     <>
       <Helmet>
@@ -123,6 +127,7 @@ const Home = () => {
             <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 md:p-8 max-w-5xl mx-auto">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Row 1: Check-in, Check-out, Location, Room Class */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <FormField
                       control={form.control}
@@ -214,23 +219,64 @@ const Home = () => {
 
                     <FormField
                       control={form.control}
-                      name="guests"
+                      name="location"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Guests</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(parseInt(value))}
-                            defaultValue={field.value?.toString()}
-                          >
+                          <FormLabel>Location (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="City or property" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="roomClass"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Room Class</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select guests" />
+                                <SelectValue placeholder="Select class" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+                              <SelectItem value="standard">Standard</SelectItem>
+                              <SelectItem value="deluxe">Deluxe</SelectItem>
+                              <SelectItem value="suite">Suite</SelectItem>
+                              <SelectItem value="villa">Villa</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Row 2: Passengers Breakdown */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="adults"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Adults
+                          </FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Adults" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Array.from({ length: 9 }, (_, i) => i + 1).map((num) => (
                                 <SelectItem key={num} value={num.toString()}>
-                                  {num} {num === 1 ? "Guest" : "Guests"}
+                                  {num} {num === 1 ? "Adult" : "Adults"}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -242,30 +288,118 @@ const Home = () => {
 
                     <FormField
                       control={form.control}
-                      name="location"
+                      name="children"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Location (optional)</FormLabel>
+                          <FormLabel className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Children
+                          </FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Children" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Array.from({ length: 9 }, (_, i) => i).map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num} {num === 1 ? "Child" : "Children"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription className="text-xs">Age 3-12</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="infants"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Baby className="h-4 w-4" />
+                            Infants
+                          </FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Infants" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Array.from({ length: 5 }, (_, i) => i).map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num} {num === 1 ? "Infant" : "Infants"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription className="text-xs">Under 3</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex flex-col justify-end">
+                      <div className="h-10 flex items-center justify-center bg-muted rounded-md px-3 border border-border">
+                        <span className="text-sm font-medium">
+                          Total: {totalGuests} {totalGuests === 1 ? "Guest" : "Guests"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Promo Code & Flexible Dates */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="promoCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Tag className="h-4 w-4" />
+                            Promo Code (Optional)
+                          </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="e.g., Cape Town"
-                              {...field}
-                            />
+                            <Input placeholder="Enter promo code" {...field} />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="flexibleDates"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col justify-end">
+                          <div className="flex items-center space-x-2 h-10">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="!mt-0 cursor-pointer">
+                              Flexible dates (±3 days)
+                            </FormLabel>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
-                  >
-                    <Search className="mr-2 h-5 w-5" />
-                    Search Availability
-                  </Button>
+                  <div className="flex justify-center pt-2">
+                    <Button type="submit" size="lg" className="w-full md:w-auto min-w-[200px]">
+                      <Search className="mr-2 h-5 w-5" />
+                      Search Properties
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </div>
