@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Navbar } from "@/components/Navbar";
 
 const formSchema = z.object({
   checkIn: z.date({
@@ -83,6 +84,7 @@ const Home = () => {
         <meta name="description" content="Book your perfect vacation rental in South Africa. Unified booking across NightsBridge, Checkfront, and more." />
       </Helmet>
       <div className="min-h-screen bg-background">
+        <Navbar />
         {/* Hero Section */}
         <div className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
           {/* Background with gradient overlay */}
