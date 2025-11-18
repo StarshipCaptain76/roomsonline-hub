@@ -108,7 +108,7 @@ const Search = () => {
   return (
     <Layout>
       <Helmet>
-        <title>Search Results – {properties.length} Properties | RoomsOnline</title>
+        <title>{`Search Results – ${properties.length} Properties | RoomsOnline`}</title>
         <meta name="description" content={`Browse ${properties.length} available properties in South Africa`} />
       </Helmet>
       <div className="container mx-auto px-4 py-8">
