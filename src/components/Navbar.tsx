@@ -19,7 +19,9 @@ export const Navbar = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminRole(session.user.id);
@@ -38,7 +40,7 @@ export const Navbar = () => {
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
-    
+
     setIsAdmin(!!data);
   };
 
@@ -54,7 +56,7 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Home className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold text-foreground">RoomsONline</span>
+            <span className="text-xl font-bold text-foreground">RoomsOnline</span>
           </Link>
 
           <div className="flex items-center gap-4">
