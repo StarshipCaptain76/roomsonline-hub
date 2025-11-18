@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Home } from "lucide-react";
 
 interface LayoutProps {
@@ -6,27 +6,32 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children }: LayoutProps) => {
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <Home className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold text-foreground">Rooms Online Booking</span>
-            </Link>
+      {!isHomePage && (
+        <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Link to="/" className="flex items-center gap-2">
+                <Home className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold text-foreground">Rooms Online Booking</span>
+              </Link>
 
-            <nav className="flex items-center gap-6">
-              <Link to="/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-                Home
-              </Link>
-              <Link to="/search" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-                Search
-              </Link>
-            </nav>
+              <nav className="flex items-center gap-6">
+                <Link to="/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  Home
+                </Link>
+                <Link to="/search" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  Search
+                </Link>
+              </nav>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <main className="flex-1">
         {children}
