@@ -6,6 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation helpers
+const isValidDate = (dateString: string): boolean => {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateString)) return false;
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date.getTime());
+};
+
+const isValidGuests = (guests: number): boolean => {
+  return Number.isInteger(guests) && guests >= 1 && guests <= 50;
+};
+
 // Mock properties data - in production, this would query actual APIs
 const mockProperties = [
   {
@@ -152,15 +164,23 @@ serve(async (req) => {
     const url = new URL(req.url);
     const checkIn = url.searchParams.get('checkIn');
     const checkOut = url.searchParams.get('checkOut');
-    const guests = parseInt(url.searchParams.get('guests') || '2');
+    const guestsParam = url.searchParams.get('guests');
     const location = url.searchParams.get('location')?.toLowerCase();
 
-    console.log(`Availability query: checkIn=${checkIn}, checkOut=${checkOut}, guests=${guests}, location=${location}`);
-
-    // Validate required params
+    // Validate required parameters
     if (!checkIn || !checkOut) {
+      console.error('Validation failed: Missing required parameters');
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required parameters: checkIn and checkOut' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate date formats
+    if (!isValidDate(checkIn) || !isValidDate(checkOut)) {
+      console.error('Validation failed: Invalid date format');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid date format. Use YYYY-MM-DD format.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -173,6 +193,7 @@ serve(async (req) => {
 
     // Validate dates
     if (checkInDate < today) {
+      console.error('Validation failed: Check-in date must be in the future');
       return new Response(
         JSON.stringify({ success: false, error: 'Check-in date must be in the future' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -180,11 +201,24 @@ serve(async (req) => {
     }
 
     if (checkOutDate <= checkInDate) {
+      console.error('Validation failed: Check-out date must be after check-in date');
       return new Response(
         JSON.stringify({ success: false, error: 'Check-out date must be after check-in date' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Validate guests parameter
+    const guests = parseInt(guestsParam || '2');
+    if (!isValidGuests(guests)) {
+      console.error('Validation failed: Invalid guests value');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Guests must be an integer between 1 and 50' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Availability query: checkIn=${checkIn}, checkOut=${checkOut}, guests=${guests}, location=${location}`);
 
     // Simulate querying NightsBridge
     const nightsbridgeProperties = mockProperties.filter(p => {
