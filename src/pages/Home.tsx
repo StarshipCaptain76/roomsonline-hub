@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
@@ -53,12 +54,14 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Home = () => {
   const navigate = useNavigate();
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [checkOutOpen, setCheckOutOpen] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      checkIn: new Date(),
-      checkOut: addDays(new Date(), 7),
+      checkIn: addDays(new Date(), 1),
+      checkOut: addDays(new Date(), 8),
       guests: 2,
       location: "",
     },
@@ -96,7 +99,7 @@ const Home = () => {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Check-in Date</FormLabel>
-                      <Popover>
+                      <Popover open={checkInOpen} onOpenChange={setCheckInOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -119,7 +122,10 @@ const Home = () => {
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setCheckInOpen(false);
+                            }}
                             disabled={(date) =>
                               date < new Date()
                             }
@@ -139,7 +145,7 @@ const Home = () => {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Check-out Date</FormLabel>
-                      <Popover>
+                      <Popover open={checkOutOpen} onOpenChange={setCheckOutOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -162,7 +168,10 @@ const Home = () => {
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setCheckOutOpen(false);
+                            }}
                             disabled={(date) =>
                               date < (form.getValues("checkIn") || new Date())
                             }
