@@ -9,6 +9,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
+import { z } from "zod";
+
+const propertySchema = z.object({
+  name: z.string().min(1, "Name is required").max(200, "Name must be less than 200 characters"),
+  description: z.string().max(5000, "Description must be less than 5000 characters"),
+  property_type: z.enum(["hotel", "vacation_rental", "apartment", "villa", "guesthouse"]),
+  location: z.string().min(1, "Location is required").max(100, "Location must be less than 100 characters"),
+  city: z.string().min(1, "City is required").max(100, "City must be less than 100 characters"),
+  country: z.string().min(1, "Country is required").max(100, "Country must be less than 100 characters"),
+  max_guests: z.number().int().positive("Max guests must be positive").max(50, "Max guests cannot exceed 50"),
+  bedrooms: z.number().int().positive("Bedrooms must be positive").max(20, "Bedrooms cannot exceed 20"),
+  bathrooms: z.number().int().positive("Bathrooms must be positive").max(20, "Bathrooms cannot exceed 20"),
+  price_per_night: z.number().positive("Price must be positive").max(1000000, "Price cannot exceed 1,000,000"),
+  currency: z.string().length(3, "Currency must be 3 characters (e.g., USD)"),
+  booking_system: z.enum(["manual", "nightsbridge", "checkfront"]),
+});
+
+type PropertyFormData = z.infer<typeof propertySchema>;
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -16,20 +34,7 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
-  const [formData, setFormData] = useState<{
-    name: string;
-    description: string;
-    property_type: "hotel" | "vacation_rental" | "apartment" | "villa" | "guesthouse";
-    location: string;
-    city: string;
-    country: string;
-    max_guests: number;
-    bedrooms: number;
-    bathrooms: number;
-    price_per_night: number;
-    currency: string;
-    booking_system: "manual" | "nightsbridge" | "checkfront";
-  }>({
+  const [formData, setFormData] = useState<PropertyFormData>({
     name: "",
     description: "",
     property_type: "hotel",
@@ -79,7 +84,25 @@ const Admin = () => {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase.from("properties").insert([formData]);
+      // Validate form data
+      propertySchema.parse(formData);
+
+      const { error } = await supabase.from("properties").insert([{
+        name: formData.name,
+        description: formData.description,
+        property_type: formData.property_type,
+        location: formData.location,
+        city: formData.city,
+        country: formData.country,
+        max_guests: formData.max_guests,
+        bedrooms: formData.bedrooms,
+        bathrooms: formData.bathrooms,
+        price_per_night: formData.price_per_night,
+        currency: formData.currency,
+        booking_system: formData.booking_system,
+        amenities: [],
+        images: [],
+      }]);
 
       if (error) throw error;
       
@@ -99,7 +122,12 @@ const Admin = () => {
         booking_system: "manual",
       });
     } catch (error: any) {
-      toast.error(error.message || "Failed to add property");
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      } else {
+        toast.error(error.message || "Failed to add property");
+      }
     } finally {
       setSubmitting(false);
     }
