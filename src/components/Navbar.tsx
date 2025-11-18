@@ -56,7 +56,7 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Home className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold text-foreground">RoomsOnline</span>
+            <span className="text-xl font-bold text-foreground">Rooms Online Booking</span>
           </Link>
 
           <div className="flex items-center gap-4">

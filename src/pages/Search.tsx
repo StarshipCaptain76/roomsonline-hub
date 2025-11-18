@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Navbar } from "@/components/Navbar";
+import { Layout } from "@/components/Layout";
 import { PropertyCard } from "@/components/PropertyCard";
 import { SearchForm } from "@/components/SearchForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,9 +48,7 @@ const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
+    <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <SearchForm />
@@ -95,7 +93,7 @@ const Search = () => {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 };
 
