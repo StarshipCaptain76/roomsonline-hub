@@ -8,10 +8,13 @@ interface LayoutProps {
 export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const isPropertyPage = location.pathname.startsWith("/property/");
+  const isBookingPage = location.pathname.startsWith("/booking/");
+  const hideHeader = isHomePage || isPropertyPage || isBookingPage;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {!isHomePage && (
+      {!hideHeader && (
         <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -39,7 +42,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
       <footer className="border-t bg-card/30 py-6 mt-auto">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Booking Hub Connect. All rights reserved.
+          © 2025 Rooms Online Booking – All rights reserved
         </div>
       </footer>
     </div>

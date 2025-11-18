@@ -1,4 +1,5 @@
 import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,10 @@ const PropertyDetail = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>{property.name} | RoomsOnline Booking</title>
+        <meta name="description" content={`Book ${property.name} in ${property.location}. From R${property.rateFrom}/night. ${property.description.substring(0, 120)}...`} />
+      </Helmet>
       <div className="min-h-screen bg-background pb-24 md:pb-8">
         {/* Hero Section */}
         <div className="relative w-full h-64 md:h-96">

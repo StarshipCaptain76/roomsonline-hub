@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/Layout";
 import { SearchForm } from "@/components/SearchForm";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,95 +22,60 @@ const Search = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"low-high" | "high-low">("low-high");
 
-  useEffect(() => {
-    // Check if search params exist
-    const checkIn = searchParams.get("checkIn");
-    const checkOut = searchParams.get("checkOut");
-    const guests = searchParams.get("guests");
-    const location = searchParams.get("location");
-
-    if (!checkIn || !checkOut || !guests) {
-      toast.error("Please enter search criteria");
-      navigate("/");
-      return;
-    }
-
-    const fetchAvailability = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Call the edge function
-        const { data, error: functionError } = await supabase.functions.invoke('availability', {
-          body: {
-            checkIn,
-            checkOut,
-            guests: parseInt(guests),
-            location: location || undefined
-          }
-        });
-
-        if (functionError) throw functionError;
-
-        if (data?.success) {
-          console.log(`Loaded ${data.totalCount} properties (NightsBridge: ${data.breakdown.nightsbridge}, Checkfront: ${data.breakdown.checkfront})`);
-          setProperties(data.properties);
-        } else {
-          throw new Error(data?.error || 'Failed to fetch availability');
-        }
-      } catch (err) {
-        console.error('Error fetching availability:', err);
-        setError('Unable to fetch live availability. Using demo data.');
-        
-        // Fallback to local mock data
-        fallbackFilterProperties();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAvailability();
-  }, [searchParams, navigate]);
-
   const fallbackFilterProperties = () => {
     const checkIn = searchParams.get("checkIn");
     const checkOut = searchParams.get("checkOut");
     const guests = parseInt(searchParams.get("guests") || "1");
     const location = searchParams.get("location")?.toLowerCase();
-
     const checkInDate = checkIn ? new Date(checkIn) : new Date();
     const checkOutDate = checkOut ? new Date(checkOut) : new Date();
     const now = new Date();
-
     let filtered = mockProperties.filter((property) => {
-      // Filter by guest capacity
       if (property.maxGuests < guests) return false;
-
-      // Filter by location if provided
-      if (location && !property.name.toLowerCase().includes(location) && !property.location.toLowerCase().includes(location)) {
-        return false;
-      }
-
-      // Simulate availability (70% chance available if dates are valid)
-      if (checkInDate > now && checkOutDate > checkInDate) {
-        return Math.random() > 0.3;
-      }
-
+      if (location && !property.name.toLowerCase().includes(location) && !property.location.toLowerCase().includes(location)) return false;
+      if (checkInDate > now && checkOutDate > checkInDate) return Math.random() > 0.3;
       return false;
     });
-
     setProperties(filtered);
   };
 
   useEffect(() => {
+    const checkIn = searchParams.get("checkIn");
+    const checkOut = searchParams.get("checkOut");
+    const guests = searchParams.get("guests");
+    const location = searchParams.get("location");
+    if (!checkIn || !checkOut || !guests) {
+      toast.error("Please enter search criteria");
+      navigate("/");
+      return;
+    }
+    const fetchAvailability = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        if (import.meta.env.DEV) await new Promise(resolve => setTimeout(resolve, 300));
+        const { data, error: functionError } = await supabase.functions.invoke('availability', {
+          body: { checkIn, checkOut, guests: parseInt(guests), location: location || undefined }
+        });
+        if (functionError) throw functionError;
+        if (data?.success) {
+          console.log(`Loaded ${data.totalCount} properties (NightsBridge: ${data.breakdown.nightsbridge}, Checkfront: ${data.breakdown.checkfront})`);
+          setProperties(data.properties);
+        } else throw new Error(data?.error || 'Failed to fetch availability');
+      } catch (err) {
+        console.error('Error fetching availability:', err);
+        setError('Unable to fetch live availability. Using demo data.');
+        fallbackFilterProperties();
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAvailability();
+  }, [searchParams, navigate]);
+
+  useEffect(() => {
     if (properties.length > 0) {
-      const sorted = [...properties].sort((a, b) => {
-        if (sortBy === "low-high") {
-          return a.rateFrom - b.rateFrom;
-        } else {
-          return b.rateFrom - a.rateFrom;
-        }
-      });
+      const sorted = [...properties].sort((a, b) => sortBy === "low-high" ? a.rateFrom - b.rateFrom : b.rateFrom - a.rateFrom);
       setProperties(sorted);
     }
   }, [sortBy]);
@@ -122,22 +88,15 @@ const Search = () => {
   if (loading) {
     return (
       <Layout>
+        <Helmet><title>Searching Properties... | RoomsOnline</title></Helmet>
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <SearchForm />
-          </div>
+          <div className="mb-8"><SearchForm /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
                 <Skeleton className="h-48 w-full rounded-t-lg" />
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
-                </CardContent>
+                <CardHeader><Skeleton className="h-6 w-3/4 mb-2" /><Skeleton className="h-4 w-1/2" /></CardHeader>
+                <CardContent><Skeleton className="h-4 w-full mb-2" /><Skeleton className="h-4 w-2/3" /></CardContent>
               </Card>
             ))}
           </div>
@@ -148,127 +107,61 @@ const Search = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>Search Results – {properties.length} Properties | RoomsOnline</title>
+        <meta name="description" content={`Browse ${properties.length} available properties in South Africa`} />
+      </Helmet>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <SearchForm />
-        </div>
-
+        <div className="mb-8"><SearchForm /></div>
         {error && (
-          <Alert className="mb-6 border-[#FF88D1] bg-[#FF88D1]/5">
-            <AlertCircle className="h-4 w-4 text-[#FF88D1]" />
-            <AlertDescription className="text-[#545454]">
-              {error} Connect APIs for real-time availability.
-            </AlertDescription>
+          <Alert className="mb-6 border-primary/20 bg-primary/5">
+            <AlertCircle className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-foreground/70">{error}</AlertDescription>
           </Alert>
         )}
-
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold mb-2">
-              {properties.length} {properties.length === 1 ? "Property" : "Properties"} Found
-            </h2>
-            <p className="text-muted-foreground">
-              {searchParams.get("guests") && `For ${searchParams.get("guests")} guests`}
-              {searchParams.get("location") && ` in ${searchParams.get("location")}`}
-            </p>
-          </div>
-          
-          {properties.length > 0 && (
-            <div className="w-full sm:w-48">
-              <Select value={sortBy} onValueChange={(value: "low-high" | "high-low") => setSortBy(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low-high">Price: Low to High</SelectItem>
-                  <SelectItem value="high-low">Price: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">{properties.length} {properties.length === 1 ? "property" : "properties"} found</h2>
+          <Select value={sortBy} onValueChange={(value: "low-high" | "high-low") => setSortBy(value)}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low-high">Price: Low to High</SelectItem>
+              <SelectItem value="high-low">Price: High to Low</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-
         {properties.length === 0 ? (
-          <Card className="text-center py-16">
-            <CardContent className="pt-6">
+          <Card className="text-center py-12">
+            <CardContent>
               <SearchIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">No properties match your search</h3>
-              <p className="text-muted-foreground mb-6">
-                Try adjusting your dates, number of guests, or location.
-              </p>
-              <Link to="/">
-                <Button variant="default">Back to Search</Button>
-              </Link>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">No properties found</h3>
+              <p className="text-muted-foreground mb-4">Try adjusting your search criteria</p>
+              <Link to="/"><Button className="bg-primary hover:bg-primary/90">Back to Search</Button></Link>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((property) => (
-              <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="relative">
-                  <img 
-                    src={property.thumbnail} 
-                    alt={property.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <Badge 
-                    className="absolute top-2 right-2"
-                    variant={property.system === 'nightsbridge' ? 'default' : 'secondary'}
-                  >
-                    {property.system === 'nightsbridge' ? (
-                      <><Hotel className="h-3 w-3 mr-1" /> NightsBridge</>
-                    ) : (
-                      <><CheckCircle className="h-3 w-3 mr-1" /> Checkfront</>
-                    )}
+                  <img src={property.thumbnail} alt={property.name} className="w-full h-48 object-cover" />
+                  <Badge className="absolute top-2 right-2 text-white border-0" style={{ backgroundColor: property.system === 'nightsbridge' ? '#FF88D1' : '#10b981' }}>
+                    {property.system === 'nightsbridge' ? <><Hotel className="h-3 w-3 mr-1" /> NightsBridge</> : <><CheckCircle className="h-3 w-3 mr-1" /> Checkfront</>}
                   </Badge>
                 </div>
-                
                 <CardHeader>
-                  <CardTitle className="text-xl">{property.name}</CardTitle>
-                  <CardDescription className="text-sm">{property.location}</CardDescription>
+                  <CardTitle className="text-foreground">{property.name}</CardTitle>
+                  <CardDescription className="text-foreground/70">{property.location}</CardDescription>
                 </CardHeader>
-                
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{property.maxGuests} guests max</span>
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {property.description}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1">
-                      {property.amenities.slice(0, 3).map((amenity) => (
-                        <Badge key={amenity} variant="outline" className="text-xs">
-                          {amenity}
-                        </Badge>
-                      ))}
-                      {property.amenities.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{property.amenities.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="pt-2">
-                      <p className="text-2xl font-bold text-primary">
-                        From R{property.rateFrom}
-                        <span className="text-sm font-normal text-muted-foreground">/night</span>
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-2xl font-bold text-primary">R{property.rateFrom}</span>
+                    <span className="text-sm text-foreground/70">per night</span>
+                  </div>
+                  <div className="flex items-center text-sm text-foreground/70">
+                    <Users className="h-4 w-4 mr-1" />Up to {property.maxGuests} guests
                   </div>
                 </CardContent>
-                
-                <CardFooter>
-                  <Button 
-                    className="w-full" 
-                    onClick={() => handleViewDetails(property.id)}
-                  >
-                    View Details
-                  </Button>
-                </CardFooter>
+                <CardFooter><Button className="w-full" onClick={() => handleViewDetails(property.id)}>View Details</Button></CardFooter>
               </Card>
             ))}
           </div>

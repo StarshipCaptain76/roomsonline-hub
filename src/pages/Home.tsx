@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -74,8 +75,13 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <div className="container mx-auto px-4 py-12">
+    <>
+      <Helmet>
+        <title>RoomsOnline - Find Your Perfect Stay in South Africa</title>
+        <meta name="description" content="Book your perfect vacation rental in South Africa. Unified booking across NightsBridge, Checkfront, and more." />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+        <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-8 text-foreground">
             Find Your Perfect Stay in South Africa
@@ -228,7 +234,7 @@ const Home = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
