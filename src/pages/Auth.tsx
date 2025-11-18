@@ -10,7 +10,10 @@ import { z } from "zod";
 
 const authSchema = z.object({
   email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password must be less than 100 characters"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(100, "Password must be less than 100 characters"),
 });
 
 const Auth = () => {
@@ -76,7 +79,7 @@ const Auth = () => {
             {isLogin ? "Welcome Back" : "Create Account"}
           </CardTitle>
           <CardDescription className="text-center">
-            {isLogin ? "Sign in to your account" : "Sign up for RoomsONline"}
+            {isLogin ? "Sign in to your account" : "Sign up for RoomsOnline"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -111,11 +114,7 @@ const Auth = () => {
           </form>
 
           <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline"
-            >
+            <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-sm text-primary hover:underline">
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
           </div>
